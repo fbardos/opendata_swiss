@@ -8,4 +8,4 @@ You can find the corresponding Jupyter Notebook here: [kaggle](https://www.kaggl
 * `output/`: Output json files from API extraction from [CKAN API](http://docs.ckan.org/en/latest/api/index.html)
 * `tags_network/`: Stored tiles for [folium](https://python-visualization.github.io/folium/) / [leaflet](https://leafletjs.com/).
 * `gephi/`: Contains project file for [gephi](https://gephi.org/). Gephi is well suited for network graphs.
-* `extract.py`: Contains code for data extraction.
+* `dag_opendata_swiss.py`: Contains [Apache Airflow](https://airflow.apache.org/) DAG for data extraction.
