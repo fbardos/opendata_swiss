@@ -52,13 +52,15 @@ with DAG(
             pages_extract.append(page_response['result'])
         packages = list(itertools.chain(*pages_extract))
         log.info(f'Imported {len(packages)} packages from {url}.')
+        import_meta = {
+            'timestamp_imported': timestamp.isoformat(),
+            'extraction_url': url,
+        }
         return_dict = {
-            'meta_data': {
-                'timestamp_imported': timestamp.isoformat(),
-                'extraction_url': url,
-            },
+            'meta_data': import_meta,
             'data': packages,
         }
+        # FIX: This does not work. Use XCom instead. Tasks may run on completely different machines.
         with open(full_filepath, 'w') as file:
             json.dump(return_dict, file)
 
@@ -76,7 +78,9 @@ with DAG(
             with open(full_filepath, 'r') as file:
                 doc = json.load(file)
                 log.info(f'EXTRACT from DOC: {str(doc)[:100]}')
-                client.insert_one('opendata_swiss_packages', doc)
+                for package in doc['data']['result']:
+                    package['import_meta'] = import_meta
+                    client.insert_one('opendata_swiss_packages', package)
 
     @task(task_id='remove_local_file')
     def remove_local_file():
