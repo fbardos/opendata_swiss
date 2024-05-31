@@ -9,7 +9,6 @@ import requests
 from airflow import DAG
 from airflow.decorators import task
 from airflow.providers.mongo.hooks.mongo import MongoHook
-from airflow.providers.sftp.hooks.sftp import SFTPHook
 
 log = logging.getLogger(__name__)
 
@@ -63,29 +62,12 @@ with DAG(
             'data': packages,
         }
 
-        # Store to /tmp before transfer
-        with open(full_filepath, 'w') as file:
-            json.dump(return_dict, file)
-
-        # Store data directly after retrieval
-        sftp_client = SFTPHook('sftp_nas69')
-        sftp_client.store_file(remote_filepath + filename, full_filepath)
-
-        os.remove(full_filepath)  # Remove temporary stored file from /tmp
-
-    @task(task_id='load_to_mongo')
-    def load_to_mongo():
+        doc = return_dict
         with MongoHook('mongodb_u1082') as client:
-            sftp_client = SFTPHook('sftp_nas69')
-            sftp_client.retrieve_file(remote_filepath + filename, full_filepath)
-            with open(full_filepath, 'r') as file:
-                doc = json.load(file)
-                log.info(f'EXTRACT from DOC: {str(doc)[:100]}')
-                for package in doc['data']:
-                    package['import_meta'] = import_meta
-                    client.insert_one('opendata_swiss_packages', package)
-            os.remove(full_filepath)  # Remove temporary stored file from /tmp
+            log.info(f'EXTRACT from DOC: {str(doc)[:100]}')
+            for package in doc['data']:
+                package['import_meta'] = import_meta
+                client.insert_one('opendata_swiss_packages', package)
 
     t1 = extract_packages()
-    t2 = load_to_mongo()
-    t1 >> t2
+    t1
