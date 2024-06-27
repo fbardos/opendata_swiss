@@ -9,6 +9,7 @@ import requests
 from airflow import DAG
 from airflow.decorators import task
 from airflow.providers.mongo.hooks.mongo import MongoHook
+from airflow.models import Variable
 
 log = logging.getLogger(__name__)
 
@@ -17,6 +18,10 @@ with DAG(
     schedule_interval='0 1 * * *',  # Every day at 01:00
     start_date=dt.datetime(2022, 8, 17),
     catchup=False,
+    default_args=dict(
+        email=Variable.get('AIRFLOW__MAIL_FAILURE'),
+        email_on_failure=True,
+    ),
 ) as dag:
 
     timestamp = dt.datetime.now(tz=dt.timezone.utc)
